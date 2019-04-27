@@ -1,6 +1,14 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Variables
+## Google Cloud
+$GOOGLE_PROJECT_ID = "YOUR_GOOGLE_CLOUD_PROJECT_ID"
+$GOOGLE_CLIENT_EMAIL = "YOUR_SERVICE_ACCOUNT_EMAIL_ADDRESS"
+$GOOGLE_JSON_KEY_LOCATION = "/path/to/your/private-key.json"
+$LOCAL_USER = "mitchellh"
+$LOCAL_SSH_KEY = "~/.ssh/id_rsa"
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -57,6 +65,25 @@ Vagrant.configure("2") do |config|
   #   vb.memory = "1024"
   # end
   #
+  config.vm.provider :google do |google, override|
+    override.vm.box = "google/gce"
+
+    google.google_project_id = $GOOGLE_PROJECT_ID
+    google.google_client_email = $GOOGLE_CLIENT_EMAIL
+    google.google_json_key_location = $GOOGLE_JSON_KEY_LOCATION
+    
+    google.image_family = 'debian-9'
+
+    google.name = "mautic-vagrant"
+    google.machine_type = "n1-standard-1"
+    google.zone = "us-central1-f"
+    google.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+    google.tags = ['vagrantbox', 'dev']
+
+    override.ssh.username = $LOCAL_USER
+    override.ssh.private_key_path = $LOCAL_SSH_KEY
+  end
+
   # View the documentation for the provider you are using for more
   # information on available options.
   #
