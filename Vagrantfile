@@ -2,11 +2,16 @@
 # vi: set ft=ruby :
 
 # Variables
-## Google Cloud
+## Database
+$DBHOST = "localhost"
+$DBNAME = "mauticdb"
+$DBUSER = "mauticuser"
+$DBPASSWD = "mauticpwd"
+### Google Cloud
 $GOOGLE_PROJECT_ID = "YOUR_GOOGLE_CLOUD_PROJECT_ID"
 $GOOGLE_CLIENT_EMAIL = "YOUR_SERVICE_ACCOUNT_EMAIL_ADDRESS"
 $GOOGLE_JSON_KEY_LOCATION = "/path/to/your/private-key.json"
-$LOCAL_USER = "mitchellh"
+$LOCAL_USER = "Randall"
 $LOCAL_SSH_KEY = "~/.ssh/id_rsa"
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
@@ -55,16 +60,17 @@ Vagrant.configure("2") do |config|
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
+
+  # Virtual-Box provisioning
+  config.vm.define "virtualbox" do |vb|
+    # Disable 'vagrant-vbguest' auto update
+    # vb.vbguest.auto_update = false
+    # Setup localhost configuration and MariaDB database
+    vb.vm.provision "LocalHost-Setup", type: "shell", preserve_order: true, path: "./provisioners/localhost/localhost-setup.sh"
+  end
+  
+  # Google provisioning
+  # Reference: https://github.com/mitchellh/vagrant-google
   config.vm.provider :google do |google, override|
     override.vm.box = "google/gce"
 
@@ -77,7 +83,7 @@ Vagrant.configure("2") do |config|
     google.name = "mautic-vagrant"
     google.machine_type = "n1-standard-1"
     google.zone = "us-central1-f"
-    google.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+    google.metadata = {'custom' => 'metadata', 'testing' => 'Hello'}
     google.tags = ['vagrantbox', 'dev']
 
     override.ssh.username = $LOCAL_USER
@@ -90,24 +96,18 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  
+  #
   # Install Debian, PHP, and Mautic dependancies (and php.ini time-zone configuration)
   config.vm.provision "Install-Mautic-System", type: "shell", preserve_order: true, path: "install-mautic-system.sh", env: {
     "TIMEZONE" => "America\/Los_Angeles/"
   }
+  # Install Database
+  config.vm.provision "Database-Setup", type: "shell", preserve_order: true, path: "./provisioners/database-setup.sh", sensitive: true, env: {
+  "DBHOST" => $DBHOST, 
+  "DBNAME" => $DBNAME, 
+  "DBUSER" => $DBUSER, 
+  "DBPASSWD" => $DBPASSWD
+} 
   # Install Mautic
   config.vm.provision "Install-Mautic", type: "shell", preserve_order: true, path: "install-mautic.sh"
-
-  #Virtual-Box provisioning
-  config.vm.define "virtualbox" do |vb|
-    # Disable 'vagrant-vbguest' auto update
-    vb.vbguest.auto_update = false
-    # Setup localhost configuration and MariaDB database
-    vb.vm.provision "LocalHost-Setup", type: "shell", preserve_order: true, path: "./provisioners/localhost/localhost-setup.sh", sensitive: true, env: {
-      "DBHOST" => "localhost", 
-      "DBNAME" => "mauticdb", 
-      "DBUSER" => "mauticuser", 
-      "DBPASSWD" => "mauticpwd"
-    } 
-  end
 end
