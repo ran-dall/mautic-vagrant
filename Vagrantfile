@@ -65,7 +65,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "virtualbox" do |vb|
     # Disable 'vagrant-vbguest' auto update
     # vb.vbguest.auto_update = false
-    # Setup localhost configuration and MariaDB database
+    
+    # Setup SSL localhost configuration
     vb.vm.provision "LocalHost-Setup", type: "shell", preserve_order: true, path: "./provisioners/localhost/localhost-setup.sh"
   end
   
