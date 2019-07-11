@@ -1,16 +1,28 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+
+# "unofficial" bash strict mode
+# See: http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o errexit  # Exit when simple command fails               'set -e'
+set -o errtrace # Exit on error inside any functions or subshells.
+set -o nounset  # Trigger error when expanding unset variables 'set -u'
+set -o pipefail # Do not hide errors within pipes              'set -o pipefail'
+IFS=$'\n\t'
 
 # Update system
-apt-get update -y
+apt-get -qq update -y
 apt-get -qq upgrade -y
 
 # Install Apache2
-apt-get install apache2 -y
+apt-get -qq install apache2 -y
 
-# Disable directory listing globally
-sed -i "s|Options Indexes FollowSymLinks|Options FollowSymLinks|" /etc/apache2/apache2.conf
-# Allow Apache2 override to all
-sed -i "s|AllowOverride None|AllowOverride All|g" /etc/apache2/apache2.conf
+sed -i "
+    # Disable directory listing globally
+    s|Options Indexes FollowSymLinks|Options FollowSymLinks|;
+
+    # Allow Apache2 override to all
+    s|AllowOverride None|AllowOverride All|g
+    " /etc/apache2/apache2.conf
 
 # Copy Mautic Apache2 .conf files
 cp -f /vagrant/provisioners/mautic.conf /etc/apache2/sites-available/mautic.conf
@@ -24,20 +36,22 @@ systemctl enable apache2.service
 # Install PHP
 apt-get install php libapache2-mod-php libapache2-mod-php php-common php-mbstring php-xmlrpc php-soap php-gd php-xml php-intl php-tidy php-mysql php-cli php-mcrypt php-ldap php-zip php-curl php-sqlite3 php-amqplib php-imap -y
 
-# Enable PHP Error Reporting
-sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.0/apache2/php.ini
-sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.0/apache2/php.ini
+sed -i "
+    # Enable PHP Error Reporting
+    s|error_reporting = .*|error_reporting = E_ALL|g;
+    s|display_errors = .*|display_errors = On|g;
 
-# Set Recommended Mautic PHP Settings
-sed -i "s|file_uploads = .*|file_uploads = On|" /etc/php/7.0/apache2/php.ini
-sed -i "s|allow_url_fopen = .*|allow_url_fopen = On|" /etc/php/7.0/apache2/php.ini
-sed -i "s|short_open_tag = .*|short_open_tag = On|" /etc/php/7.0/apache2/php.ini
-sed -i "s|memory_limit = .*|memory_limit = 512M|" /etc/php/7.0/apache2/php.ini
-sed -i "s|upload_max_filesize = .*|upload_max_filesize = 100M|" /etc/php/7.0/apache2/php.ini
-sed -i "s|max_execution_time = .*|max_execution_time = 360|" /etc/php/7.0/apache2/php.ini
+    # Set Recommended Mautic PHP Settings
+    s|file_uploads = .*|file_uploads = On|g;
+    s|allow_url_fopen = .*|allow_url_fopen = On|g;
+    s|short_open_tag = .*|short_open_tag = On|g;
+    s|memory_limit = .*|memory_limit = 512M|g;
+    s|upload_max_filesize = .*|upload_max_filesize = 100M|g;
+    s|max_execution_time = .*|max_execution_time = 360|g
 
-# Set PHP Time Zone
-sed -i "s|.*date.timezone =.*|date.timezone = /$TIMEZONE/|" /etc/php/7.0/apache2/php.ini
+    # Set PHP Time Zone
+    s|.*date.timezone =.*|date.timezone = /$TIMEZONE/|g;
+    " /etc/php/7.0/apache2/php.ini
 
 # Restart Apache2
 systemctl restart apache2.service
