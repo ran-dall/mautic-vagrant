@@ -25,7 +25,7 @@ Below you'll find the revalant notes and `caveats` for each set-up.
 	- `DBHOST`=`localhost`
 	- `DBNAME`=`mauticdb`
 	- `DBUSER`=`mauticuser`
-	- `DBPASSWD`=`vagrant`
+	- `DBPASSWD`=`mauticpwd`
 
 #### Notes
 * Basic `SSL` has been implemented for `localhost` to fullfill the miniumum deployment requirements. Access `https://` to bypass any Mautic installation warnings. 
